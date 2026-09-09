@@ -1,8 +1,8 @@
 # Spec Kit — lempir_app
 
-**Version:** 1.0 — State Base  
+**Version:** 2.0 — Local-First Ready  
 **Date:** 2026-09-09  
-**Status:** Active Development (Phase 2: Backend & Persistence)  
+**Status:** Active Development (Phase 1: Local Persistence)  
 
 ---
 
@@ -55,10 +55,14 @@ lempir_app/
 | **Type Safety** | TypeScript 6 | Catch errors early, better IDE support |
 | **Build** | Vite 8 | Fast builds, HMR |
 | **Mobile** | Flutter + Dart 3.11 | Cross-platform iOS/Android from single codebase |
-| **State** | Svelte stores (writable) | Simple, reactive, no boilerplate |
-| **Backend** | TBD (Phase 2) | Currently mock, will be Node/Python/Firebase |
-| **Database** | TBD (Phase 2) | Firestore, PostgreSQL, or MongoDB |
-| **Auth** | TBD (Phase 2) | Firebase Auth, Auth0, or custom JWT |
+| **Web Data** | IndexedDB (Dexie.js) | Transacciones, presupuestos, historial estructurado; indexable, queryable, offline-first |
+| **Web Prefs** | localStorage | Tema, idioma, flags booleanos (pequeño volumen) |
+| **Mobile Data** | SQLite + Drift | Type-safe, reactive, ORM integrado, migrations automáticas |
+| **Mobile State** | Riverpod + Drift streams | Reactivity, caching, sync con DB local |
+| **State (Web)** | Svelte stores + persistence layer | Mantener patrón actual, agregar persistencia debajo |
+| **Export/Import** | JSON (web + mobile) | Backup local, cross-platform restore |
+| **Backend** | TBD Phase 5 (Cloud Sync) | Currently local-only; cloud optional future |
+| **Auth** | TBD Phase 5 | Currently none (single-user local) |
 
 ### 2.3 Data Model (Current/Mock)
 
@@ -100,6 +104,37 @@ lempir_app/
   ...
 }
 ```
+
+### 2.4 Local-First / Offline-First Architecture
+
+**Filosofía:** App funciona 100% sin internet. Datos persistidos localmente. Cloud sync opcional futura.
+
+**Pattern:**
+- **Domain layer:** Shared models (Transaction, Category, Budget, UserPreferences, AppMetadata)
+- **Repository pattern:** Abstract interfaces → platform-specific implementations
+- **Web:** Dexie.js (IndexedDB wrapper) + Svelte stores + localStorage
+- **Mobile:** SQLite (Drift ORM) + Riverpod providers
+- **Export/Import:** JSON para backup y cross-platform transfer
+
+**Data Persistence:**
+- Transacciones, presupuestos, historial → IndexedDB (web) / SQLite (mobile)
+- Preferencias (tema, idioma) → localStorage (web) / SharedPreferences (mobile)
+- Migraciones automáticas con versionado
+- Soft-delete support para future sync
+
+**Capabilities:**
+- ✅ Offline CRUD (add/edit/delete transactions)
+- ✅ Data persist across app restarts
+- ✅ Soft-delete + future sync support
+- ✅ Export to JSON/CSV
+- ✅ Import from backup
+- ✅ Optional encryption (future)
+
+**NOT included (Phase 5+):**
+- ❌ Cloud sync / Remote backend
+- ❌ Multi-user collaboration
+- ❌ Authentication
+- ❌ Real-time collaboration
 
 ---
 
@@ -394,39 +429,69 @@ UI updates
 
 ## 7. Future Roadmap
 
-### Phase 2: Backend & Persistence (Weeks 2-3)
-- [ ] Choose backend framework (Node/Express, Python/FastAPI, Vercel Functions, etc.)
-- [ ] Design API schema:
-  - `POST /api/transactions` — add
-  - `GET /api/transactions` — list (with filters)
-  - `DELETE /api/transactions/:id` — remove
-  - `PATCH /api/transactions/:id` — update
-  - `GET /api/dashboard` — summary (income, expenses, by category)
-  - `POST /api/budgets` — set category allocation
-  - `GET /api/budgets` — retrieve
-- [ ] Implement database (Firestore / PostgreSQL / MongoDB)
-- [ ] Connect Web frontend to API
-- [ ] Remove mock data, enable live updates
+### Phase 1: Local Persistence (Web + Mobile) (Weeks 1-2)
+**Objective:** Implement offline-first data storage for both web and mobile.
 
-### Phase 3: Authentication (Week 4)
-- [ ] Choose auth provider (Firebase, Auth0, custom JWT)
-- [ ] Implement sign-up, login, logout
-- [ ] Per-user data isolation
-- [ ] Session management
+**Web (IndexedDB + Dexie):**
+- [ ] Install Dexie.js, setup TypeScript types
+- [ ] Create IndexedDB schema (transactions, budgets, categories, preferences)
+- [ ] Implement repositories (transaction, category, preferences)
+- [ ] Implement services (addTransaction, updateBudget, export, import)
+- [ ] Refactor store.ts to use services (maintain API compatibility)
+- [ ] Add migrations script (v1 schema)
+- [ ] Test offline: add tx → close app → reload → verify persist
 
-### Phase 4: Mobile (Flutter) (Weeks 5-6)
-- [ ] Replace Counter template with real app structure
-- [ ] Implement same 4 views (Dashboard, Transactions, Coach, Settings)
-- [ ] Share state with Web (Redux, Riverpod, or HTTP API sync)
-- [ ] Push to test devices
+**Mobile (SQLite + Drift):**
+- [ ] Add Riverpod, Drift, json_serializable to pubspec.yaml
+- [ ] Define entities (Transaction, Category, Budget, Preferences)
+- [ ] Generate Drift database schema
+- [ ] Create repositories + datasources
+- [ ] Create Riverpod providers (transaction, preferences)
+- [ ] Scaffold main.dart with routing structure
 
-### Phase 5: Polish & Launch (Week 7+)
-- [ ] IA Coach: real insights (NLP, ML model for spending patterns)
-- [ ] Export (CSV, PDF)
-- [ ] Notifications (budget alerts, etc.)
-- [ ] Dark mode sync across platforms
-- [ ] Performance optimization
-- [ ] Launch: App Store, Play Store, Web domain
+**Est. effort:** 20-22 hours
+
+### Phase 2: Cloud Sync Architecture (Week 3)
+**Objective:** Design cloud sync protocol without implementing backend.
+
+- [ ] Define sync strategy (conflict resolution, eventual consistency)
+- [ ] Sketch API endpoints (no implementation yet)
+- [ ] Add `syncedAt`, `deleted` fields to models
+- [ ] Prepare sync layer skeleton (web & mobile)
+- [ ] Document sync protocol
+
+**Est. effort:** 8-10 hours
+
+### Phase 3: Mobile UI + Binding (Weeks 4-5)
+**Objective:** Port web UI to Flutter, connect to Riverpod providers.
+
+- [ ] Adapt Dashboard, Transactions, Coach, Settings to Flutter
+- [ ] Connect widgets to Riverpod providers
+- [ ] Implement CRUD operations (add, edit, delete transactions)
+- [ ] Add theme/accent switching
+- [ ] Test on iOS + Android devices
+
+**Est. effort:** 12-14 hours
+
+### Phase 4: Export/Import + Backup (Week 6)
+**Objective:** Enable data backup and cross-platform restore.
+
+- [ ] Implement JSON export (web + mobile)
+- [ ] Implement JSON import (merge/overwrite logic)
+- [ ] Add file picker for import
+- [ ] Test roundtrip: export web → import mobile → verify match
+
+**Est. effort:** 4-6 hours
+
+### Phase 5: Cloud Backend + Auth (Future)
+**Objective:** Add optional cloud sync and authentication.
+
+- [ ] Choose backend framework (Node/Express, Vercel Functions, etc.)
+- [ ] Implement auth (Firebase, Auth0, or custom JWT)
+- [ ] Design + implement API endpoints (list, add, update, delete transactions)
+- [ ] Implement sync engine (bidirectional, conflict resolution)
+- [ ] Connect web + mobile to API
+- [ ] Multi-user support, per-user data isolation
 
 ---
 
@@ -440,6 +505,13 @@ UI updates
 | 2026-09-09 | Mock data in Phase 1 | Focus on UX, defer backend complexity | Faster demo & validation, clear separation |
 | 2026-09-09 | Flutter for mobile | One codebase iOS + Android | Cost savings, faster launch, unified logic |
 | 2026-09-09 | TypeScript throughout | Type safety, better tooling, fewer bugs | Confidence in refactors, better IDE support |
+| 2026-09-09 | Local-first / Offline-first architecture | App works 100% without internet; cloud sync optional future | Resilient, autonomous app; prep for sync later |
+| 2026-09-09 | IndexedDB (Dexie.js) for web data | Structured data (txs, budgets) need indexing & querying | Better than localStorage for complex domain models |
+| 2026-09-09 | localStorage for web preferences | Lightweight, perfect for theme/language/flags | Simple key-value, no DB overhead |
+| 2026-09-09 | SQLite + Drift for mobile | Type-safe ORM, reactive streams, auto-migrations | Matches domain model, better than Hive/Isar for financial data |
+| 2026-09-09 | Riverpod for mobile state | Reactive, composable, integrates with Drift streams | Better than Provider for this scale, handles DB binding |
+| 2026-09-09 | Repository pattern (shared domain) | Abstract interfaces for web & mobile | Code reuse, platform agnostic logic, easier testing |
+| 2026-09-09 | JSON for export/import | Human-readable, portable, no proprietary formats | Easy backup, cross-platform data transfer, future sync prep |
 
 ---
 
@@ -474,7 +546,11 @@ UI updates
 - **Budget:** 4 fixed categories only (future: custom categories)
 - **Locale:** es-ES formatting (currency, dates)
 - **Theme:** Default dark mode, but Light available
-- **Session:** No persistence → page reload = state reset (until Phase 2)
+- **Storage:** All data stored locally (IndexedDB/SQLite); no cloud sync until Phase 5
+- **Single-user:** No auth, no multi-user; cloud account optional future
+- **Data Encryption:** Not implemented (device/app sandboxed); optional future
+- **Connectivity:** App functions 100% offline; cloud features optional future
+- **Sync:** Soft-delete + metadata fields prepared for future cloud sync
 
 ---
 
