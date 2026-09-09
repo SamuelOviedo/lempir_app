@@ -1,0 +1,55 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+build/
+*.apk
+*.ipa
+*.app
+
+# Android
+android/.gradle/
+android/local.properties
+android/build/
+*.iml
+
+# iOS
+ios/.symlinks/
+ios/.generated.xcconfig
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+
+# Node / Web
+node_modules/
+.npm
+dist/
+build/
+.svelte-kit/
+.vite/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# CodeGraph
+.codegraph/
+
+# Misc
+*.iml
+.metadata
+package-lock.json
