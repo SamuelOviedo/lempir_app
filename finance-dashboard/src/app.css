@@ -227,7 +227,7 @@
 	}
 
 	.bg-radial-gradient {
-		@apply bg-gradient-to-br from-[#5affa0]/20 to-transparent;
+		@apply bg-gradient-to-br from-(--acc)/20 to-transparent;
 	}
 
 	.text-white\/7 {
@@ -280,6 +280,143 @@
 
 	.font-mono {
 		@apply font-['JetBrains_Mono'];
+	}
+}
+
+/* ===== Theme tokens =====
+ * Applied from the store in +layout.svelte:
+ *   <html data-theme="dark|light" data-accent="green|blue|purple|orange">
+ */
+:root {
+	/* Accent (green by default) */
+	--acc: #5affa0;
+	--accd: #22a865;
+	--accink: #04140b;
+	--accfg: #0f7a4a;
+	--acct: var(--acc); /* accent used as text color */
+	--acc12: color-mix(in srgb, var(--acc) 12%, transparent);
+	--acc22: color-mix(in srgb, var(--acc) 22%, transparent);
+	--acc30: color-mix(in srgb, var(--acc) 32%, transparent);
+
+	/* Dark theme (default) */
+	--bg: #080b0f;
+	--ink: #e6edf3;
+	--ink2: rgba(230, 237, 243, 0.62);
+	--ink3: rgba(230, 237, 243, 0.44);
+	--line: rgba(255, 255, 255, 0.07);
+	--c1: rgba(255, 255, 255, 0.05);
+	--c2: rgba(255, 255, 255, 0.014);
+	--fill: rgba(255, 255, 255, 0.06);
+	--panel: rgba(8, 11, 15, 0.5);
+	--sheet: linear-gradient(165deg, rgba(24, 31, 39, 0.97), rgba(12, 16, 21, 0.98));
+	--toast: rgba(12, 20, 16, 0.96);
+	color-scheme: dark;
+}
+
+:root[data-accent='blue'] {
+	--acc: #6aa8ff;
+	--accd: #2563eb;
+	--accink: #030d1f;
+	--accfg: #1d4ed8;
+}
+
+:root[data-accent='purple'] {
+	--acc: #b48cff;
+	--accd: #7c3aed;
+	--accink: #12051f;
+	--accfg: #6d28d9;
+}
+
+:root[data-accent='orange'] {
+	--acc: #ffab5e;
+	--accd: #e07a17;
+	--accink: #1f0f02;
+	--accfg: #c2410c;
+}
+
+:root[data-theme='light'] {
+	--acct: var(--accfg);
+	--bg: #eef1f5;
+	--ink: #0d1418;
+	--ink2: rgba(13, 20, 24, 0.64);
+	--ink3: rgba(13, 20, 24, 0.48);
+	--line: rgba(13, 20, 24, 0.12);
+	--c1: rgba(255, 255, 255, 0.92);
+	--c2: rgba(255, 255, 255, 0.62);
+	--fill: rgba(13, 20, 24, 0.055);
+	--panel: rgba(255, 255, 255, 0.8);
+	--sheet: #ffffff;
+	--toast: #ffffff;
+	color-scheme: light;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: var(--bg);
+	color: var(--ink);
+	font-family: 'Inter', system-ui, sans-serif;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+a {
+	color: var(--acct);
+	text-decoration: none;
+}
+
+a:hover {
+	color: var(--accd);
+}
+
+@keyframes aiPulse {
+	0%,
+	100% {
+		opacity: 0.35;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.75;
+		transform: scale(1.06);
+	}
+}
+
+@keyframes riseIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes sheetIn {
+	from {
+		opacity: 0;
+		transform: translateY(18px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes scShine {
+	0% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
 	}
 }
 

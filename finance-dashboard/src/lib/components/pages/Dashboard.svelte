@@ -1,28 +1,32 @@
 <script lang="ts">
-	import { dashboard, CATEGORIES } from '$lib/store';
+	import {
+		dashboard,
+		CATEGORIES,
+		MONTHS_ES,
+		isInRange,
+		rangeMonths,
+		txMonthIndex
+	} from '$lib/store';
 
-	let state: any = $state(null);
-	dashboard.subscribe((s) => {
-		state = s;
-	});
+	let state = $derived($dashboard);
 
-	let income = $derived(
-		((state?.txs as any[] | undefined)
-			?.filter((t: any) => t.type === 'income')
-			?.reduce((a: number, t: any) => a + t.amount, 0) ?? 0) as number
-	);
+	// Movements inside the range selected in the header (Este mes / Trimestre / Año)
+	let txs = $derived(state.txs.filter((t) => isInRange(t.date, state.range)));
+	let months = $derived(rangeMonths(state.range));
 
+	let incomeTxs = $derived(txs.filter((t) => t.type === 'income'));
+	let income = $derived(incomeTxs.reduce((a, t) => a + t.amount, 0));
 	let expense = $derived(
-		(state?.txs as any[] | undefined)
-			?.filter((t: any) => t.type === 'expense')
-			?.reduce((a: number, t: any) => a + t.amount, 0) ?? 0
+		txs.filter((t) => t.type === 'expense').reduce((a, t) => a + t.amount, 0)
 	);
-
 	let leftover = $derived(income - expense);
 
+	// Monthly budgets scaled to the selected range
 	let totalBudget = $derived(
-		(Object.values(state?.budgets ?? {}) as number[]).reduce((a: number, b: number) => a + b, 0)
+		(Object.values(state.budgets ?? {}) as number[]).reduce((a, b) => a + b, 0) * months
 	);
+
+	const ratio = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : 0);
 
 	const money = (n: number, cents = false) =>
 		'$' +
@@ -35,35 +39,35 @@
 		{
 			label: 'INGRESOS TOTALES',
 			value: money(income),
-			delta: '+8,2%',
-			note: '2 fuentes · nómina + anticipo',
-			pct: 100
+			delta: state.range,
+			note: `${incomeTxs.length} ${incomeTxs.length === 1 ? 'movimiento' : 'movimientos'} de ingreso`,
+			pct: income > 0 ? 100 : 0
 		},
 		{
 			label: 'GASTOS TOTALES',
 			value: money(expense),
-			delta: '-3,1%',
-			note: `${Math.round((expense / income) * 100)}% de los ingresos gastados`,
-			pct: Math.min(100, (expense / income) * 100)
+			delta: `${Math.round(ratio(expense, income))}%`,
+			note: `${Math.round(ratio(expense, income))}% de los ingresos gastados`,
+			pct: Math.min(100, ratio(expense, income))
 		},
 		{
 			label: 'EFECTIVO LIBRE',
 			value: money(leftover),
-			delta: leftover > 0 ? `+${Math.round((leftover / income) * 100)}%` : '0%',
+			delta: leftover > 0 ? `+${Math.round(ratio(leftover, income))}%` : '0%',
 			note:
 				leftover >= 0
 					? 'Dinero libre tras todos los compromisos'
 					: 'Estás gastando por encima de tus ingresos',
-			pct: Math.max(4, Math.min(100, (leftover / income) * 100))
+			pct: Math.max(4, Math.min(100, ratio(leftover, income)))
 		}
 	]);
 
 	let categories = $derived(
 		CATEGORIES.map((c) => {
-			const items = state.txs.filter((t: any) => t.cat === c.id);
-			const spent = items.reduce((a: number, t: any) => a + t.amount, 0);
-			const budget = state.budgets[c.id];
-			const pct = Math.min(100, (spent / budget) * 100);
+			const items = txs.filter((t) => t.type === 'expense' && t.cat === c.id);
+			const spent = items.reduce((a, t) => a + t.amount, 0);
+			const budget = (state.budgets[c.id] ?? 0) * months;
+			const pct = Math.min(100, ratio(spent, budget));
 			const over = spent > budget;
 			const near = !over && pct > 85;
 			const remain = budget - spent;
@@ -82,14 +86,17 @@
 		})
 	);
 
-	let trend = $derived([
-		{ month: 'ABR', v: 640 },
-		{ month: 'MAY', v: 812 },
-		{ month: 'JUN', v: 905 },
-		{ month: 'JUL', v: 1080 },
-		{ month: 'AGO', v: 1224 },
-		{ month: 'SEP', v: Math.max(0, leftover) }
-	]);
+	// Net savings (income − expense) for the last 6 months, ending with the current month
+	let trend = $derived.by(() => {
+		const current = new Date().getMonth();
+		return Array.from({ length: 6 }, (_, k) => {
+			const m = (current - 5 + k + 12) % 12;
+			const net = state.txs
+				.filter((t) => txMonthIndex(t.date) === m)
+				.reduce((a, t) => a + (t.type === 'income' ? t.amount : -t.amount), 0);
+			return { month: MONTHS_ES[m].toUpperCase(), v: Math.max(0, net) };
+		});
+	});
 
 	let maxT = $derived(Math.max(...trend.map((t) => t.v), 1));
 </script>
@@ -100,7 +107,7 @@
 		{#each hero as card, i}
 			<div
 				class="flex-basis-52 rounded-4 backdrop-blur-4 relative min-w-0 flex-1 overflow-hidden border"
-				style="padding: 18px; border-color: rgba(255,255,255,0.07); background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+				style="padding: 18px; border-color: var(--line); background: linear-gradient(to bottom, var(--c1), var(--c2))"
 			>
 				{#if i === 2}
 					<div
@@ -109,12 +116,12 @@
 				{/if}
 
 				<div class="relative mb-3 flex items-center justify-between gap-2">
-					<div class="font-700 text-xs tracking-widest" style="color: rgba(230,237,243,0.42)">
+					<div class="font-700 text-xs tracking-widest" style="color: var(--ink3)">
 						{card.label}
 					</div>
 					<div
 						class="font-600 rounded-1.75 px-1.75 py-1.25 text-xs {i === 2
-							? 'bg-[#5affa0]/12 text-[#5affa0]'
+							? 'bg-(--acc)/12 text-(--acct)'
 							: 'bg-red-500/12 text-red-400'}"
 					>
 						{card.delta}
@@ -123,24 +130,24 @@
 
 				<div
 					class="font-600 relative text-2xl tracking-tight {i === 2
-						? 'text-[#5affa0]'
-						: 'text-white'}"
+						? 'text-(--acct)'
+						: 'text-(--ink)'}"
 				>
 					{card.value}
 				</div>
 
-				<div class="relative mt-2 text-xs" style="color: rgba(230,237,243,0.42)">{card.note}</div>
+				<div class="relative mt-2 text-xs" style="color: var(--ink3)">{card.note}</div>
 
 				<div
 					class="rounded-1 relative mt-3.5 h-1 overflow-hidden"
-					style="background-color: rgba(255,255,255,0.06)"
+					style="background-color: var(--fill)"
 				>
 					<div
 						class="rounded-1 h-full {i === 0
-							? 'bg-gradient-to-r from-[#5affa0] to-[#22a865]'
+							? 'bg-gradient-to-r from-(--acc) to-(--accd)'
 							: i === 1
 								? 'bg-gradient-to-r from-[#ff8a8a] to-[#d64b4b]'
-								: 'bg-gradient-to-r from-[#5affa0] to-[#22a865]'}"
+								: 'bg-gradient-to-r from-(--acc) to-(--accd)'}"
 						style="width: {card.pct}%"
 					></div>
 				</div>
@@ -152,7 +159,7 @@
 	<div>
 		<div class="mb-3.25 flex items-baseline justify-between gap-3">
 			<h2 class="font-600 text-base tracking-tight">Presupuesto por categorías</h2>
-			<div class="font-500 font-mono text-xs" style="color: rgba(230,237,243,0.42)">
+			<div class="font-500 font-mono text-xs" style="color: var(--ink3)">
 				{money(totalBudget)} asignado / {money(income)} de ingresos
 			</div>
 		</div>
@@ -166,8 +173,8 @@
 							? 'border-yellow-500/30'
 							: ''}"
 					style="{!cat.over && !cat.near
-						? 'border-color: rgba(255,255,255,0.07)'
-						: ''}; padding: 17px; background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+						? 'border-color: var(--line)'
+						: ''}; padding: 17px; background: linear-gradient(to bottom, var(--c1), var(--c2))"
 				>
 					<div class="flex items-start gap-3">
 						<div
@@ -189,7 +196,7 @@
 						</div>
 						<div class="min-w-0 flex-1">
 							<div class="font-600 text-sm tracking-tight">{cat.name}</div>
-							<div class="mt-0.75 text-xs" style="color: rgba(230,237,243,0.42)">{cat.sub}</div>
+							<div class="mt-0.75 text-xs" style="color: var(--ink3)">{cat.sub}</div>
 						</div>
 						<div
 							class="font-700 rounded-1.75 flex-none px-1.75 py-1.25 text-xs {cat.over
@@ -198,7 +205,7 @@
 									? 'bg-yellow-500/18 text-yellow-400'
 									: ''}"
 							style={!cat.over && !cat.near
-								? 'background-color: rgba(255,255,255,0.06); color: rgba(230,237,243,0.42)'
+								? 'background-color: var(--fill); color: var(--ink3)'
 								: ''}
 						>
 							{cat.status}
@@ -207,14 +214,14 @@
 
 					<div class="mt-4 flex items-baseline justify-between gap-2">
 						<div class="font-600 text-2xl tracking-tight">{money(cat.spent)}</div>
-						<div class="font-500 font-mono text-xs" style="color: rgba(230,237,243,0.42)">
+						<div class="font-500 font-mono text-xs" style="color: var(--ink3)">
 							de {money(cat.budget)}
 						</div>
 					</div>
 
 					<div
 						class="rounded-1.5 mt-2.75 h-1.5 overflow-hidden"
-						style="background-color: rgba(255,255,255,0.06)"
+						style="background-color: var(--fill)"
 					>
 						<div
 							class="rounded-1.5 h-full transition-all duration-500"
@@ -223,10 +230,10 @@
 					</div>
 
 					<div class="mt-2.25 flex items-center justify-between gap-2 text-xs">
-						<span style="color: rgba(230,237,243,0.42)"
+						<span style="color: var(--ink3)"
 							>{Math.round((cat.spent / cat.budget) * 100)}% usado</span
 						>
-						<span style={cat.over ? 'color: #ff5555' : 'color: rgba(230,237,243,0.42)'}>
+						<span style={cat.over ? 'color: #ff5555' : 'color: var(--ink3)'}>
 							{cat.over ? money(-cat.remain) + ' excedido' : money(cat.remain) + ' disponible'}
 						</span>
 					</div>
@@ -238,11 +245,11 @@
 	<!-- Trend Chart -->
 	<div
 		class="rounded-4 backdrop-blur-4 border"
-		style="padding: 18px; border-color: rgba(255,255,255,0.07); background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+		style="padding: 18px; border-color: var(--line); background: linear-gradient(to bottom, var(--c1), var(--c2))"
 	>
 		<div class="mb-3 flex items-baseline justify-between gap-3">
 			<h2 class="font-600 text-base">Efectivo libre, últimos 6 meses</h2>
-			<div class="font-500 font-mono text-xs" style="color: #5affa0">
+			<div class="font-500 font-mono text-xs" style="color: var(--acc)">
 				+{Math.round(((Math.max(0, leftover) - 640) / 640) * 100)}% vs abril
 			</div>
 		</div>
@@ -250,16 +257,16 @@
 		<div class="mt-5 flex items-end gap-2.5" style="height: 126px">
 			{#each trend as m, i}
 				<div class="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
-					<div class="font-500 font-mono text-xs" style="color: rgba(230,237,243,0.42)">
+					<div class="font-500 font-mono text-xs" style="color: var(--ink3)">
 						{money(m.v)}
 					</div>
 					<div
 						class="rounded-t-1.75 rounded-b-0.75 w-full transition-all duration-500"
 						style="height: {Math.max(6, (m.v / maxT) * 100)}%; background: {i === trend.length - 1
-							? `linear-gradient(180deg, #5affa0, rgba(94,255,160,.12)); box-shadow: 0 0 24px rgba(90,255,160,.12)`
-							: 'rgba(255,255,255,.06)'};"
+							? `linear-gradient(180deg, var(--acc), var(--acc12)); box-shadow: 0 0 24px var(--acc12)`
+							: 'var(--fill)'};"
 					></div>
-					<div class="font-600 text-xs tracking-widest" style="color: rgba(230,237,243,0.42)">
+					<div class="font-600 text-xs tracking-widest" style="color: var(--ink3)">
 						{m.month}
 					</div>
 				</div>

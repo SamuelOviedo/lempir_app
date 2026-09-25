@@ -20,10 +20,10 @@
 
 <header
 	class="flex flex-wrap items-end gap-3 border-b px-4 py-5 md:gap-5 md:px-8"
-	style="border-color: rgba(255,255,255,0.07)"
+	style="border-color: var(--line)"
 >
 	<div class="flex flex-1 flex-col">
-		<div class="font-600 text-xs tracking-widest" style="color: rgba(230,237,243,0.42)">
+		<div class="font-600 text-xs tracking-widest" style="color: var(--ink3)">
 			{titles[currentView]?.[0] || ''}
 		</div>
 		<h1 class="font-600 mt-1.75 text-2xl tracking-tight">{titles[currentView]?.[1] || ''}</h1>
@@ -33,7 +33,7 @@
 		{#if currentView === 'dashboard'}
 			<div
 				class="rounded-2.75 flex gap-0.5 border px-0.75 py-0.75"
-				style="border-color: rgba(255,255,255,0.07); background-color: rgba(255,255,255,0.06)"
+				style="border-color: var(--line); background-color: var(--fill)"
 			>
 				{#each ranges as range}
 					<button
@@ -49,7 +49,7 @@
 
 		<button
 			onclick={() => dashboard.openModal()}
-			class="rounded-2.75 font-600 flex cursor-pointer items-center gap-1.75 border border-[#5affa0]/30 bg-[#5affa0]/12 px-3.5 py-2.25 text-xs text-[#5affa0] transition-all hover:bg-[#5affa0]/22"
+			class="rounded-2.75 font-600 flex cursor-pointer items-center gap-1.75 border border-(--acc)/30 bg-(--acc)/12 px-3.5 py-2.25 text-xs text-(--acct) transition-all hover:bg-(--acc)/22"
 		>
 			<svg
 				width="14"
@@ -69,18 +69,18 @@
 
 <style>
 	.active {
-		background-color: rgba(90, 255, 160, 0.12);
-		color: white;
-		border-color: rgba(90, 255, 160, 0.22);
+		background-color: var(--acc12);
+		color: var(--ink);
+		border-color: var(--acc22);
 	}
 
 	button:not(.active) {
 		background-color: transparent;
-		color: rgba(230, 237, 243, 0.42);
+		color: var(--ink3);
 	}
 
 	button:not(.active):hover {
-		background-color: rgba(255, 255, 255, 0.06);
-		color: rgba(230, 237, 243, 0.6);
+		background-color: var(--fill);
+		color: var(--ink2);
 	}
 </style>

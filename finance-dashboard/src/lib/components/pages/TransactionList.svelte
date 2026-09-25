@@ -3,7 +3,7 @@
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
 
-	let state = $state<{
+	let ui = $state<{
 		query: string;
 		txs: Array<{
 			id: number;
@@ -28,7 +28,7 @@
 	>([]);
 
 	dashboard.subscribe((s: any) => {
-		state = s;
+		ui = s;
 		const q = s.query.trim().toLowerCase();
 		const catName = (id: string) => CATEGORIES.find((c) => c.id === id)?.name || 'Ingreso';
 
@@ -39,7 +39,7 @@
 			)
 			.map((t: any) => {
 				const c = CATEGORIES.find((x) => x.id === t.cat);
-				const hue = t.type === 'income' ? '#5affa0' : c?.hue || '#8b98a5';
+				const hue = t.type === 'income' ? 'var(--acc)' : c?.hue || '#8b98a5';
 
 				return {
 					...t,
@@ -55,7 +55,7 @@
 						(t.type === 'income' ? '+' : '−') +
 						'$' +
 						t.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 }),
-					amountColor: t.type === 'income' ? 'color: #5affa0' : 'color: var(--ink)'
+					amountColor: t.type === 'income' ? 'color: var(--acc)' : 'color: var(--ink)'
 				};
 			});
 	});
@@ -66,12 +66,12 @@
 <div class="px-4 py-6 md:px-8">
 	<div
 		class="rounded-4 backdrop-blur-4 overflow-hidden border"
-		style="border-color: rgba(255,255,255,0.07); background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+		style="border-color: var(--line); background: linear-gradient(to bottom, var(--c1), var(--c2))"
 	>
 		<!-- Search Header -->
 		<div
 			class="flex items-center gap-2.5 border-b px-4 py-3.75"
-			style="border-color: rgba(255,255,255,0.07)"
+			style="border-color: var(--line)"
 		>
 			<svg
 				width="15"
@@ -82,19 +82,19 @@
 				stroke-width="1.9"
 				stroke-linecap="round"
 				class="flex-none"
-				style="color: rgba(230,237,243,0.42)"
+				style="color: var(--ink3)"
 			>
 				<path d="M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4" />
 			</svg>
 			<input
 				type="text"
 				placeholder="Buscar transacciones, comercios, categorías…"
-				value={state.query}
+				value={ui?.query ?? ''}
 				oninput={(e) => dashboard.setQuery((e.currentTarget as HTMLInputElement).value)}
-				class="min-w-0 flex-1 border-none bg-transparent text-xs text-white"
+				class="min-w-0 flex-1 border-none bg-transparent text-xs text-(--ink)"
 			/>
-			<span class="font-500 flex-none font-mono text-xs" style="color: rgba(230,237,243,0.42)">
-				{filteredTxs.length} de {state.txs.length}
+			<span class="font-500 flex-none font-mono text-xs" style="color: var(--ink3)">
+				{filteredTxs.length} de {ui?.txs.length ?? 0}
 			</span>
 		</div>
 
@@ -102,7 +102,7 @@
 		{#each filteredTxs as tx (tx.id)}
 			<div
 				class="tx-row group flex items-center gap-3.25 border-b px-4 py-3.25 transition-colors"
-				style="border-color: rgba(255,255,255,0.07)"
+				style="border-color: var(--line)"
 				animate:flip={{ duration: 200 }}
 				transition:fade={{ duration: 150 }}
 			>
@@ -117,7 +117,7 @@
 					<div class="font-500 overflow-hidden text-sm text-ellipsis whitespace-nowrap">
 						{tx.name}
 					</div>
-					<div class="mt-0.5 text-xs" style="color: rgba(230,237,243,0.42)">
+					<div class="mt-0.5 text-xs" style="color: var(--ink3)">
 						{tx.date} · {tx.category}
 					</div>
 				</div>
@@ -135,7 +135,7 @@
 						onclick={() => dashboard.startEditTransaction(tx.id)}
 						title="Editar transacción"
 						class="rounded-2 flex h-7 w-7 items-center justify-center hover:bg-blue-500/20"
-						style="border: 1px solid rgba(255,255,255,0.07); color: rgba(230,237,243,0.6)"
+						style="border: 1px solid var(--line); color: var(--ink2)"
 					>
 						✏️
 					</button>
@@ -143,7 +143,7 @@
 						onclick={() => dashboard.openDeleteConfirmation(tx.id, tx.name)}
 						title="Eliminar transacción"
 						class="rounded-2 flex h-7 w-7 items-center justify-center hover:bg-red-500/20"
-						style="border: 1px solid rgba(255,255,255,0.07); color: rgba(230,237,243,0.6)"
+						style="border: 1px solid var(--line); color: var(--ink2)"
 					>
 						🗑️
 					</button>
@@ -152,7 +152,7 @@
 		{/each}
 
 		{#if filteredTxs.length === 0}
-			<div class="py-8 text-center text-sm" style="color: rgba(230,237,243,0.42)">
+			<div class="py-8 text-center text-sm" style="color: var(--ink3)">
 				No transactions found
 			</div>
 		{/if}
@@ -169,11 +169,11 @@
 	}
 
 	.tx-row:hover {
-		background-color: var(--fill, rgba(255, 255, 255, 0.06));
+		background-color: var(--fill, var(--fill));
 	}
 
 	:global(.tx-row input):focus-visible {
-		outline: 2px solid var(--acc, #5affa0);
+		outline: 2px solid var(--acc);
 		outline-offset: 2px;
 	}
 </style>

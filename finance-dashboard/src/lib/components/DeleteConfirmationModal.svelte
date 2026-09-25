@@ -46,7 +46,7 @@
 	<!-- Modal -->
 	<div
 		class="rounded-4 backdrop-blur-4 relative mx-4 w-full max-w-sm border px-5 py-5 shadow-lg"
-		style="border-color: rgba(255,255,255,0.07); background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+		style="border-color: var(--line); background: linear-gradient(to bottom, var(--c1), var(--c2))"
 		transition:scale={{ duration: 240, start: 0.98 }}
 	>
 		<!-- Header -->
@@ -56,10 +56,10 @@
 
 		<!-- Content -->
 		<div class="mb-4">
-			<p class="text-sm" style="color: rgba(230,237,243,0.8)">
+			<p class="text-sm" style="color: var(--ink)">
 				¿Estás seguro de que deseas eliminar <span class="font-semibold">"{transactionName}"</span>?
 			</p>
-			<p class="mt-2 text-xs" style="color: rgba(230,237,243,0.42)">
+			<p class="mt-2 text-xs" style="color: var(--ink3)">
 				Esta acción no se puede deshacer.
 			</p>
 		</div>
@@ -79,14 +79,14 @@
 				onclick={handleCancel}
 				disabled={isDeleting}
 				class="rounded-3 font-600 flex-1 border px-3 py-2.5 text-xs transition-all disabled:opacity-50"
-				style="border-color: rgba(255,255,255,0.07); color: rgba(230,237,243,0.8)"
+				style="border-color: var(--line); color: var(--ink)"
 			>
 				Cancelar
 			</button>
 			<button
 				onclick={handleConfirmDelete}
 				disabled={isDeleting}
-				class="rounded-3 font-600 flex-1 border-none px-3 py-2.5 text-xs text-white transition-all disabled:opacity-50"
+				class="rounded-3 font-600 flex-1 border-none px-3 py-2.5 text-xs text-(--ink) transition-all disabled:opacity-50"
 				style="background: rgba(255,85,85,0.9)"
 			>
 				{isDeleting ? 'Eliminando...' : 'Eliminar'}

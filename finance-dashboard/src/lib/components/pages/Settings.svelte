@@ -1,25 +1,9 @@
 <script lang="ts">
-	import { dashboard } from '$lib/store';
+	import { dashboard, ACCENTS, type DashboardState } from '$lib/store';
 
-	let state = $state({
-		toggles: {} as Record<string, boolean>,
-		mode: 'dark',
-		accent: 'green'
-	});
-	dashboard.subscribe((s) => {
-		state.toggles = s.toggles;
-		state.mode = s.mode;
-		state.accent = s.accent;
-	});
+	const accents = ACCENTS;
 
-	const accents = [
-		{ id: 'green', label: 'Verde', acc: '#5affa0', accd: '#22a865' },
-		{ id: 'blue', label: 'Azul', acc: '#6aa8ff', accd: '#2563eb' },
-		{ id: 'purple', label: 'Púrpura', acc: '#b48cff', accd: '#7c3aed' },
-		{ id: 'orange', label: 'Naranja', acc: '#ffab5e', accd: '#e07a17' }
-	];
-
-	const themeModes = [
+	const themeModes: Array<{ id: DashboardState['mode']; label: string; icon: string }> = [
 		{
 			id: 'light',
 			label: 'Modo Claro',
@@ -50,42 +34,45 @@
 			body: 'Sigue sincronizando el archivo de Excel heredado hasta que decidas dejarlo atrás.'
 		}
 	];
+
+	let currentAccent = $derived(accents.find((a) => a.id === $dashboard.accent) ?? accents[0]);
 </script>
 
 <div class="px-4 py-6 md:px-8">
 	<div class="flex max-w-xl flex-col gap-3.5">
 		<!-- Toggles -->
-		{#each settingsItems as item}
+		{#each settingsItems as item (item.key)}
+			{@const on = !!$dashboard.toggles[item.key]}
 			<div
 				class="rounded-4 flex items-center gap-4 border px-4 py-4"
-				style="border-color: rgba(255,255,255,0.07); background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+				style="border-color: var(--line); background: linear-gradient(to bottom, var(--c1), var(--c2))"
 			>
 				<div class="min-w-0 flex-1">
 					<div class="font-600 text-sm">{item.title}</div>
-					<div class="mt-1.25 text-xs leading-snug" style="color: rgba(230,237,243,0.60)">
+					<div class="mt-1.25 text-xs leading-snug" style="color: var(--ink2)">
 						{item.body}
 					</div>
 				</div>
 				<button
+					type="button"
+					role="switch"
+					aria-checked={on}
 					onclick={() => dashboard.toggleSetting(item.key)}
-					title="Toggle {item.title}"
-					aria-label="Toggle {item.title}"
-					class="toggle-track flex h-6.5 w-11 flex-none cursor-pointer items-center justify-start rounded-full border-none p-0.75 transition-all"
-					class:active={state.toggles[item.key]}
+					title={item.title}
+					aria-label={item.title}
+					class="toggle-track flex h-6.5 w-11 flex-none cursor-pointer items-center justify-start rounded-full border p-0.75 transition-all"
+					class:on
 				>
 					<span
 						class="toggle-knob h-4.5 w-4.5 rounded-full transition-all"
-						class:active-knob={state.toggles[item.key]}
-						style={state.toggles[item.key]
-							? 'transform: translateX(calc(100% + 2px))'
-							: 'transform: translateX(0)'}
+						style={on ? 'transform: translateX(calc(100% + 2px))' : 'transform: translateX(0)'}
 					></span>
 				</button>
 			</div>
 		{/each}
 
 		<!-- Theme Appearance Section -->
-		<div class="mt-6 border-t pt-6" style="border-color: rgba(255,255,255,0.07)">
+		<div class="mt-6 border-t pt-6" style="border-color: var(--line)">
 			<div class="mb-4 flex items-center gap-2.25">
 				<svg
 					width="15"
@@ -96,7 +83,7 @@
 					stroke-width="1.8"
 					stroke-linecap="round"
 					class="flex-none"
-					style="color: rgba(230,237,243,0.60)"
+					style="color: var(--ink2)"
 				>
 					<path d="M12 3a9 9 0 100 18 4.5 4.5 0 000-9 4.5 4.5 0 010-9z" />
 				</svg>
@@ -105,15 +92,18 @@
 
 			<!-- Theme Mode -->
 			<div>
-				<div class="font-700 mb-2.25 text-xs tracking-widest" style="color: rgba(230,237,243,0.42)">
+				<div class="font-700 mb-2.25 text-xs tracking-widest" style="color: var(--ink3)">
 					MODO DE TEMA
 				</div>
 				<div class="flex gap-2.25">
-					{#each themeModes as mode}
+					{#each themeModes as mode (mode.id)}
+						{@const selected = $dashboard.mode === mode.id}
 						<button
-							onclick={() => dashboard.setMode(mode.id as 'dark' | 'light')}
-							class="rounded-3.25 font-600 flex flex-1 cursor-pointer items-center gap-2 border px-3 py-2.75 text-xs transition-all"
-							class:active-theme={state.mode === mode.id}
+							type="button"
+							onclick={() => dashboard.setMode(mode.id)}
+							aria-pressed={selected}
+							class="theme-btn rounded-3.25 font-600 flex flex-1 cursor-pointer items-center gap-2 border px-3 py-2.75 text-xs transition-all"
+							class:selected
 						>
 							<svg
 								width="16"
@@ -128,7 +118,7 @@
 								<path d={mode.icon} />
 							</svg>
 							<span class="flex-1 text-left">{mode.label}</span>
-							{#if state.mode === mode.id}
+							{#if selected}
 								<svg
 									width="14"
 									height="14"
@@ -149,21 +139,22 @@
 
 			<!-- Accent Color -->
 			<div class="mt-4.5">
-				<div class="font-700 mb-2.5 text-xs tracking-widest" style="color: rgba(230,237,243,0.42)">
+				<div class="font-700 mb-2.5 text-xs tracking-widest" style="color: var(--ink3)">
 					COLOR DE ACENTO
 				</div>
 				<div class="flex gap-2.5">
-					{#each accents as accent}
+					{#each accents as accent (accent.id)}
+						{@const selected = $dashboard.accent === accent.id}
 						<button
-							onclick={() =>
-								dashboard.setAccent(accent.id as 'green' | 'blue' | 'purple' | 'orange')}
+							type="button"
+							onclick={() => dashboard.setAccent(accent.id)}
 							title={accent.label}
-							aria-label="Accent color: {accent.label}"
-							class="rounded-3 border-1.5 flex h-9.5 w-9.5 flex-none cursor-pointer items-center justify-center bg-white/6 p-0 transition-all"
-							class:active-accent={state.accent === accent.id}
-							style={state.accent === accent.id
-								? `border-color: ${accent.acc}; box-shadow: 0 0 16px ${accent.acc}40`
-								: `border-color: rgba(255,255,255,0.07)`}
+							aria-label="Color de acento: {accent.label}"
+							aria-pressed={selected}
+							class="rounded-3 flex h-9.5 w-9.5 flex-none cursor-pointer items-center justify-center border-[1.5px] p-0 transition-all"
+							style={selected
+								? `background: var(--fill); border-color: ${accent.acc}; box-shadow: 0 0 16px ${accent.acc}40`
+								: 'background: var(--fill); border-color: var(--line)'}
 						>
 							<span
 								class="h-5 w-5 rounded-full"
@@ -172,41 +163,55 @@
 						</button>
 					{/each}
 				</div>
-				<div class="mt-2.75 text-xs" style="color: rgba(230,237,243,0.42)">
-					Acento actual: <span class="font-600 text-[#5affa0]">
-						{accents.find((a) => a.id === state.accent)?.label || 'Verde'}
+				<div class="mt-2.75 text-xs" style="color: var(--ink3)">
+					Acento actual: <span class="font-600" style="color: var(--acct)">
+						{currentAccent.label}
 					</span>
 				</div>
 			</div>
+
+			{#if $dashboard.dbError}
+				<div
+					class="rounded-2 mt-4 border border-red-500/50 bg-red-500/10 px-3 py-2 text-xs text-red-400"
+					role="alert"
+				>
+					No se pudo guardar la preferencia. Reintenta.
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
 
 <style>
-	.active {
-		background-color: rgba(90, 255, 160, 0.22);
-		border-color: rgba(90, 255, 160, 0.3);
-		box-shadow: 0 0 16px rgba(90, 255, 160, 0.12);
+	.toggle-track {
+		background-color: var(--fill);
+		border-color: var(--line);
 	}
 
-	.active-knob {
-		background-color: #5affa0;
+	.toggle-track.on {
+		background-color: var(--acc22);
+		border-color: var(--acc30);
+		box-shadow: 0 0 16px var(--acc12);
 	}
 
-	.active-theme {
-		background-color: rgba(90, 255, 160, 0.12);
-		color: white;
-		border-color: rgba(90, 255, 160, 0.3);
-		box-shadow: 0 0 18px rgba(90, 255, 160, 0.12);
+	.toggle-knob {
+		background-color: var(--ink3);
 	}
 
-	button:not(.active-theme) {
-		background-color: rgba(255, 255, 255, 0.06);
-		color: rgba(230, 237, 243, 0.6);
-		border-color: rgba(255, 255, 255, 0.07);
+	.toggle-track.on .toggle-knob {
+		background-color: var(--acc);
 	}
 
-	.active-accent {
-		box-shadow: 0 0 16px rgba(90, 255, 160, 0.32);
+	.theme-btn {
+		background-color: var(--fill);
+		color: var(--ink2);
+		border-color: var(--line);
+	}
+
+	.theme-btn.selected {
+		background-color: var(--acc12);
+		color: var(--ink);
+		border-color: var(--acc30);
+		box-shadow: 0 0 18px var(--acc12);
 	}
 </style>

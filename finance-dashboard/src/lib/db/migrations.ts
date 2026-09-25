@@ -4,7 +4,30 @@
  */
 
 import { db, DB_VERSION } from './schema';
+import type { LempirDatabase } from './schema';
 import type { DBTransaction, DBCategory, DBPreferences, DBMetadata } from './types';
+
+/**
+ * Default user preferences (used by seed and as fallback when the row is missing).
+ */
+export const DEFAULT_PREFERENCES: DBPreferences = {
+	key: 'user_settings',
+	mode: 'dark',
+	accent: 'green',
+	toggles: {
+		alerts: true,
+		roundup: true,
+		weekly: false,
+		sync: true
+	},
+	budgets: {
+		fixed: 3200,
+		debt: 1450,
+		life: 1100,
+		exit: 900
+	},
+	updatedAt: 0
+};
 
 // Reference data (immutable across versions)
 const SEED_CATEGORIES: DBCategory[] = [
@@ -181,21 +204,9 @@ async function seedDatabase(): Promise<void> {
 
 	// 4. Seed preferences (defaults)
 	const seedPrefs: DBPreferences = {
-		key: 'user_settings',
-		mode: 'dark',
-		accent: 'green',
-		toggles: {
-			alerts: true,
-			roundup: true,
-			weekly: false,
-			sync: true
-		},
-		budgets: {
-			fixed: 3200,
-			debt: 1450,
-			life: 1100,
-			exit: 900
-		},
+		...DEFAULT_PREFERENCES,
+		toggles: { ...DEFAULT_PREFERENCES.toggles },
+		budgets: { ...DEFAULT_PREFERENCES.budgets },
 		updatedAt: now
 	};
 	await db.preferences.put(seedPrefs);
@@ -214,8 +225,8 @@ async function seedDatabase(): Promise<void> {
  * Get next transaction ID (auto-increment).
  * Call this before creating a new transaction.
  */
-export async function getNextTransactionId(): Promise<number> {
-	const meta = await db.metadata.get('app_meta');
+export async function getNextTransactionId(database: LempirDatabase = db): Promise<number> {
+	const meta = await database.metadata.get('app_meta');
 	if (!meta) {
 		throw new Error('[DB] Metadata not found. Database may not be initialized.');
 	}
@@ -225,10 +236,10 @@ export async function getNextTransactionId(): Promise<number> {
 /**
  * Increment next ID in metadata after creating a transaction.
  */
-export async function incrementNextId(): Promise<void> {
-	const meta = await db.metadata.get('app_meta');
+export async function incrementNextId(database: LempirDatabase = db): Promise<void> {
+	const meta = await database.metadata.get('app_meta');
 	if (meta) {
-		await db.metadata.put({
+		await database.metadata.put({
 			...meta,
 			nextId: meta.nextId + 1
 		});

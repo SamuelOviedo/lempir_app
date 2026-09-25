@@ -1,7 +1,8 @@
 # FASE 2 — DISEÑO DE PERSISTENCIA LOCAL-FIRST
 
-**Fecha:** 2026-09-22  
-**Estado:** Diseño (sin implementación)  
+**Fecha:** 2026-09-22 (actualizado 2026-09-24)  
+**Estado:** Implementado en web (ver `SPEC_KIT.md` §7 Phase 1). Preferencias en IndexedDB; capa repository en `src/lib/db/repository.ts` + `web-repository.ts`, services en `src/lib/services/`.  
+**Nomenclatura:** "Fase 2" de este documento = **"Phase 1: Local Persistence"** en `SPEC_KIT.md` (el prototipo mock es Phase 0).  
 **Objetivo:** Transición de SEED hardcodeado → IndexedDB con Dexie → Store sincronizado
 
 ---

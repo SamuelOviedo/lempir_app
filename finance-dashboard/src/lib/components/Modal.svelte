@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dashboard, CATEGORIES } from '$lib/store';
+	import { dashboard, CATEGORIES, formatTxDate } from '$lib/store';
 	import { fade, scale } from 'svelte/transition';
 
 	let state = $state({
@@ -40,7 +40,11 @@
 			amount: amt,
 			type: isInc ? ('income' as const) : ('expense' as const),
 			cat: isInc ? null : state.formCat,
-			date: '8 sep',
+			// Keep the original date when editing; new movements are dated today
+			date:
+				state.modalMode === 'edit' && state.editingId !== null
+					? ($dashboard.txs.find((t) => t.id === state.editingId)?.date ?? formatTxDate())
+					: formatTxDate(),
 			name: state.name.trim() || (isInc ? 'Ingreso sin título' : 'Gasto sin título')
 		};
 
@@ -95,7 +99,7 @@
 	<!-- Modal -->
 	<div
 		class="rounded-5.5 backdrop-blur-4 relative mx-4 w-full max-w-lg border px-5.5 py-5.5 shadow-lg"
-		style="border-color: rgba(255,255,255,0.07); background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+		style="border-color: var(--line); background: var(--sheet); color: var(--ink)"
 		transition:scale={{ duration: 240, start: 0.98 }}
 	>
 		<!-- Header -->
@@ -106,7 +110,7 @@
 			<button
 				onclick={() => dashboard.closeModal()}
 				class="close-btn rounded-2.25 h-7 w-7 flex-none cursor-pointer border bg-transparent transition-colors"
-				style="border-color: rgba(255,255,255,0.07); color: rgba(230,237,243,0.60)"
+				style="border-color: var(--line); color: var(--ink2)"
 			>
 				✕
 			</button>
@@ -115,7 +119,7 @@
 		<!-- Kind Tabs -->
 		<div
 			class="rounded-3 mb-4 flex gap-0.5 border p-0.75"
-			style="background-color: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.07)"
+			style="background-color: var(--fill); border-color: var(--line)"
 		>
 			{#each ['Gasto', 'Ingreso'] as kind}
 				<button
@@ -135,15 +139,15 @@
 				<label
 					for="amount-input"
 					class="font-700 text-xs tracking-widest"
-					style="color: rgba(230,237,243,0.42)">MONTO</label
+					style="color: var(--ink3)">MONTO</label
 				>
 				<div
 					class="rounded-3.25 flex items-center gap-2.25 border px-3.5 py-3"
-					style="background-color: rgba(255,255,255,0.06); border-color: {state.error
+					style="background-color: var(--fill); border-color: {state.error
 						? 'rgba(255, 85, 85, 0.55)'
-						: 'rgba(255,255,255,0.07)'}"
+						: 'var(--line)'}"
 				>
-					<span class="font-500 font-mono text-base" style="color: rgba(230,237,243,0.42)">$</span>
+					<span class="font-500 font-mono text-base" style="color: var(--ink3)">$</span>
 					<input
 						id="amount-input"
 						type="text"
@@ -151,7 +155,7 @@
 						inputmode="decimal"
 						value={state.amount}
 						oninput={handleAmountChange}
-						class="font-600 min-w-0 flex-1 border-none bg-transparent font-mono text-2xl tracking-tight text-white"
+						class="font-600 min-w-0 flex-1 border-none bg-transparent font-mono text-2xl tracking-tight text-(--ink)"
 					/>
 				</div>
 			</div>
@@ -161,7 +165,7 @@
 				<label
 					for="name-input"
 					class="font-700 text-xs tracking-widest"
-					style="color: rgba(230,237,243,0.42)">DESCRIPCIÓN</label
+					style="color: var(--ink3)">DESCRIPCIÓN</label
 				>
 				<input
 					id="name-input"
@@ -171,8 +175,8 @@
 						: 'Comercio o nombre del recibo'}
 					value={state.name}
 					oninput={handleNameChange}
-					class="rounded-3.25 border px-3.5 py-3 text-xs text-white"
-					style="background-color: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.07)"
+					class="rounded-3.25 border px-3.5 py-3 text-xs text-(--ink)"
+					style="background-color: var(--fill); border-color: var(--line)"
 				/>
 			</div>
 
@@ -182,7 +186,7 @@
 					<div
 						id="category-group"
 						class="font-700 text-xs tracking-widest"
-						style="color: rgba(230,237,243,0.42)"
+						style="color: var(--ink3)"
 					>
 						CATEGORÍA
 					</div>
@@ -192,7 +196,7 @@
 								onclick={() => dashboard.setFormCat(cat.id)}
 								class="rounded-2.75 font-500 cursor-pointer border px-3 py-2.5 text-left text-xs transition-all"
 								class:active={state.formCat === cat.id}
-								style={state.formCat === cat.id ? '' : 'border-color: rgba(255,255,255,0.07)'}
+								style={state.formCat === cat.id ? '' : 'border-color: var(--line)'}
 								aria-pressed={state.formCat === cat.id}
 							>
 								{cat.name}
@@ -210,7 +214,7 @@
 			<!-- Submit -->
 			<button
 				onclick={handleSubmit}
-				class="rounded-3.25 font-600 mt-0.5 cursor-pointer border-none bg-gradient-to-r from-[#5affa0] to-[#22a865] px-3.25 py-3.25 text-xs text-[#04140b] shadow-lg shadow-[#5affa0]/30 transition-all hover:brightness-110"
+				class="rounded-3.25 font-600 mt-0.5 cursor-pointer border-none bg-gradient-to-r from-(--acc) to-(--accd) px-3.25 py-3.25 text-xs text-(--accink) shadow-lg shadow-(color:--acc)/30 transition-all hover:brightness-110"
 			>
 				{state.kind === 'Ingreso' ? 'Registrar ingreso' : 'Registrar gasto'}
 			</button>
@@ -220,21 +224,21 @@
 
 <style>
 	.active {
-		background-color: rgba(90, 255, 160, 0.12);
-		color: white;
-		border-color: rgba(90, 255, 160, 0.22);
+		background-color: var(--acc12);
+		color: var(--ink);
+		border-color: var(--acc22);
 	}
 
 	.active.active {
-		background: linear-gradient(160deg, rgba(90, 255, 160, 0.12), rgba(255, 255, 255, 0.014));
+		background: linear-gradient(160deg, var(--acc12), var(--c2));
 	}
 
 	.close-btn:hover {
-		color: rgba(230, 237, 243, 0.9);
+		color: var(--ink);
 	}
 
 	:global(input):focus-visible {
-		outline: 2px solid var(--acc, #5affa0);
+		outline: 2px solid var(--acc);
 		outline-offset: 2px;
 	}
 </style>
