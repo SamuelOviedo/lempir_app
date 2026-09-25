@@ -94,7 +94,7 @@
 	let maxT = $derived(Math.max(...trend.map((t) => t.v), 1));
 </script>
 
-<div class="flex flex-col gap-6 px-8" style="padding: 24px 0 40px">
+<div class="flex flex-col gap-6 px-4 md:px-8" style="padding: 24px 0 40px">
 	<!-- Hero Cards -->
 	<div class="flex flex-wrap gap-3.5">
 		{#each hero as card, i}
@@ -165,7 +165,9 @@
 						: cat.near && !cat.over
 							? 'border-yellow-500/30'
 							: ''}"
-					style="{!cat.over && !cat.near ? 'border-color: rgba(255,255,255,0.07)' : ''}; padding: 17px; background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
+					style="{!cat.over && !cat.near
+						? 'border-color: rgba(255,255,255,0.07)'
+						: ''}; padding: 17px; background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
 				>
 					<div class="flex items-start gap-3">
 						<div
@@ -274,5 +276,15 @@
 
 	.flex-basis-52 {
 		flex-basis: 210px;
+	}
+
+	@media (max-width: 768px) {
+		.grid-auto-fit {
+			grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+		}
+
+		.flex-basis-52 {
+			flex-basis: 0;
+		}
 	}
 </style>

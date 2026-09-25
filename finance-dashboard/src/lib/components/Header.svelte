@@ -19,7 +19,7 @@
 </script>
 
 <header
-	class="flex flex-wrap items-end gap-5 border-b px-8 py-5"
+	class="flex flex-wrap items-end gap-3 border-b px-4 py-5 md:gap-5 md:px-8"
 	style="border-color: rgba(255,255,255,0.07)"
 >
 	<div class="flex flex-1 flex-col">

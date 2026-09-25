@@ -3,8 +3,29 @@
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
 
-	let state: any;
-	let filteredTxs: any[] = [];
+	let state = $state<{
+		query: string;
+		txs: Array<{
+			id: number;
+			name: string;
+			type: string;
+			cat: string;
+			date: string;
+			amount: number;
+		}>;
+	} | null>(null);
+	let filteredTxs = $state<
+		Array<{
+			id: number;
+			name: string;
+			date: string;
+			category: string;
+			initials: string;
+			avatar: string;
+			amount: string;
+			amountColor: string;
+		}>
+	>([]);
 
 	dashboard.subscribe((s: any) => {
 		state = s;
@@ -42,7 +63,7 @@
 	const money = (n: number) => '$' + n.toLocaleString('es-ES');
 </script>
 
-<div class="px-8 py-6">
+<div class="px-4 py-6 md:px-8">
 	<div
 		class="rounded-4 backdrop-blur-4 overflow-hidden border"
 		style="border-color: rgba(255,255,255,0.07); background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.014))"
@@ -80,7 +101,7 @@
 		<!-- Transaction List -->
 		{#each filteredTxs as tx (tx.id)}
 			<div
-				class="tx-row flex items-center gap-3.25 border-b px-4 py-3.25 transition-colors"
+				class="tx-row group flex items-center gap-3.25 border-b px-4 py-3.25 transition-colors"
 				style="border-color: rgba(255,255,255,0.07)"
 				animate:flip={{ duration: 200 }}
 				transition:fade={{ duration: 150 }}
@@ -106,6 +127,26 @@
 					style={tx.amountColor}
 				>
 					{tx.amount}
+				</div>
+
+				<!-- Action Buttons (edit/delete) -->
+				<div class="flex flex-none gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+					<button
+						onclick={() => dashboard.startEditTransaction(tx.id)}
+						title="Editar transacción"
+						class="rounded-2 flex h-7 w-7 items-center justify-center hover:bg-blue-500/20"
+						style="border: 1px solid rgba(255,255,255,0.07); color: rgba(230,237,243,0.6)"
+					>
+						✏️
+					</button>
+					<button
+						onclick={() => dashboard.openDeleteConfirmation(tx.id, tx.name)}
+						title="Eliminar transacción"
+						class="rounded-2 flex h-7 w-7 items-center justify-center hover:bg-red-500/20"
+						style="border: 1px solid rgba(255,255,255,0.07); color: rgba(230,237,243,0.6)"
+					>
+						🗑️
+					</button>
 				</div>
 			</div>
 		{/each}

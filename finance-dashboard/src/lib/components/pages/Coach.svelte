@@ -29,7 +29,7 @@
 	let currentInsight = $state(allInsights[0]);
 </script>
 
-<div class="px-8 py-6">
+<div class="px-4 py-6 md:px-8">
 	<div class="flex max-w-2xl flex-col gap-6">
 		<!-- Welcome Section -->
 		<div class="flex flex-col gap-2">

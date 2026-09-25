@@ -4,7 +4,9 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 export default {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter(),
-		ssr: false
+		adapter: adapter()
+	},
+	compilerOptions: {
+		runes: true
 	}
 };

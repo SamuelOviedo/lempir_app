@@ -52,7 +52,7 @@
 	];
 </script>
 
-<div class="px-8 py-6">
+<div class="px-4 py-6 md:px-8">
 	<div class="flex max-w-xl flex-col gap-3.5">
 		<!-- Toggles -->
 		{#each settingsItems as item}
@@ -76,7 +76,9 @@
 					<span
 						class="toggle-knob h-4.5 w-4.5 rounded-full transition-all"
 						class:active-knob={state.toggles[item.key]}
-						style={state.toggles[item.key] ? 'transform: translateX(calc(100% + 2px))' : 'transform: translateX(0)'}
+						style={state.toggles[item.key]
+							? 'transform: translateX(calc(100% + 2px))'
+							: 'transform: translateX(0)'}
 					></span>
 				</button>
 			</div>
